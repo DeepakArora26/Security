@@ -10,4 +10,9 @@ public class LoginController {
     public String getHelloMessage() {
         return "Hello World";
     }
+
+    @GetMapping("/contactUs")
+    public String getContactNumber() {
+        return "9465168924";
+    }
 }
