@@ -1,22 +1,29 @@
 package com.masco.security.configuration;
 
-import com.masco.security.filter.CustomFilter;
+import com.masco.security.filter.JWTGenratorFilter;
+import com.masco.security.filter.JWTTokenValidatorFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 @Configuration
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.authorizeRequests()
+
+        // Creating Stateless so that no J-Session Token is created. And disabling CSRF as we are going to use JWT
+        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .csrf().disable()
+                .authorizeRequests()
                 .antMatchers("/contactUs").permitAll()
                 .antMatchers("/welcome").hasAuthority("WRITE")
-                .antMatchers("/login").hasAnyAuthority("UPDATE", "READ")
+                .antMatchers("/abcd").hasAnyAuthority("UPDATE", "READ")
                 .antMatchers("/demo").hasRole("Manager")
                 .antMatchers("/free").hasAnyRole("Admin", "USER")
                 .anyRequest()
@@ -26,7 +33,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .httpBasic();
 
-        http.addFilterBefore(new CustomFilter(), UsernamePasswordAuthenticationFilter.class);
+        http
+                .addFilterBefore(new JWTTokenValidatorFilter(), BasicAuthenticationFilter.class)
+                .addFilterAfter(new JWTGenratorFilter(), BasicAuthenticationFilter.class);
     }
 
 
